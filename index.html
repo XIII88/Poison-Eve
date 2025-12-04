@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <!-- Critical: max-scale=1.0 prevents iOS zoom issues when keyboard opens -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Poison Eve AI</title>
+    
+    <head>
+    <!-- Другие мета-теги -->
+    <link rel="icon" href="icon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="icon.ico" type="image/x-icon">
+    </head>
+
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+    
+    <!-- Marked Library -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <!-- Highlight.js -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        poison: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            200: '#bbf7d0',
+                            300: '#86efac',
+                            400: '#4ade80',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#052e16',
+                            950: '#021208',
+                        },
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'glow': 'glow 2s ease-in-out infinite alternate',
+                        'fade-in': 'fadeIn 0.3s ease-out',
+                    },
+                    keyframes: {
+                        glow: {
+                            '0%': { boxShadow: '0 0 5px #22c55e' },
+                            '100%': { boxShadow: '0 0 20px #4ade80, 0 0 10px #22c55e' }
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* CRITICAL: Use dvh for true full screen on mobile (handles address bar) */
+        body {
+            background-color: #050505;
+            background-image: 
+                radial-gradient(at 0% 0%, hsla(142, 69%, 15%, 0.3) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, hsla(280, 50%, 15%, 0.1) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, hsla(142, 69%, 10%, 0.3) 0px, transparent 50%);
+            background-attachment: fixed;
+            color: #e5e7eb;
+            height: 100dvh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: #15803d; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #22c55e; }
+
+        /* Markdown Styles */
+        .prose pre {
+            background-color: #0f1210;
+            border: 1px solid #166534;
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
+            padding: 0; /* Remove padding from pre to be managed by code-container */
+        }
+        .prose code {
+            color: #4ade80;
+            background-color: rgba(22, 163, 74, 0.1);
+            padding: 0.2em 0.4em;
+            border-radius: 0.25em;
+            font-weight: 400;
+        }
+        .prose pre code {
+            color: inherit;
+            background-color: transparent;
+            padding: 1rem; /* Re-add padding inside code block */
+            display: block;
+            overflow-x: auto;
+        }
+        
+        /* New styles for copy button container */
+        .code-container {
+            position: relative;
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 0.5rem;
+            overflow: hidden; /* Contains the border from pre */
+            background-color: #0f1210; /* Ensures background matches pre */
+            border: 1px solid #166534;
+        }
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            background-color: rgba(34, 197, 94, 0.1); /* Light green header */
+            border-bottom: 1px solid #166534;
+            color: #86efac;
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* TABLE FIX: Scrollable tables */
+        .prose table {
+            display: block;
+            width: 100%;
+            overflow-x: auto;
+            white-space: nowrap;
+            border-color: #333;
+            margin-bottom: 1rem;
+        }
+        .prose th {
+            color: #86efac;
+            border-bottom: 1px solid #15803d;
+            padding: 8px 16px;
+        }
+        .prose td {
+            border-bottom: 1px solid #333;
+            padding: 8px 16px;
+        }
+
+        .prose strong { color: #fff; }
+        .prose h1, .prose h2, .prose h3 { color: #86efac; }
+        .prose a { color: #4ade80; text-decoration: underline; }
+        .prose blockquote { border-left-color: #22c55e; color: #d1d5db; }
+
+        /* Glassmorphism & UI */
+        .glass-panel {
+            background: rgba(18, 18, 18, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(34, 197, 94, 0.1);
+        }
+
+        .message-user {
+            background: linear-gradient(135deg, #166534 0%, #14532d 100%);
+            border: 1px solid #22c55e;
+            box-shadow: 0 4px 15px -3px rgba(34, 197, 94, 0.2);
+        }
+        
+        .message-ai {
+            background: rgba(30, 30, 30, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .typing-dot { animation: typing 1.4s infinite ease-in-out both; }
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes typing { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+    </style>
+</head>
+<body class="antialiased selection:bg-green-500 selection:text-black">
+
+    <!-- Header -->
+    <header class="glass-panel flex-none sticky top-0 z-50 flex items-center justify-between px-4 py-3 border-b border-white/5">
+        <div class="flex items-center gap-3">
+            <div class="relative w-10 h-10 flex items-center justify-center rounded-xl bg-gradient-to-tr from-green-900 to-black border border-green-500/30 shadow-[0_0_15px_rgba(34,197,94,0.3)]">
+                <i class="fa-solid fa-leaf text-green-400 text-lg"></i>
+                <div class="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_#22c55e]"></div>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-white via-green-100 to-green-400 uppercase font-sans">
+                    Poison Eve
+                </h1>
+                <p class="text-[10px] text-green-400/60 font-mono tracking-widest">MISTRAL.AI // SYSTEM ACTIVE</p>
+            </div>
+        </div>
+        
+        <button onclick="clearChat()" class="p-2 rounded-lg text-gray-400 hover:text-green-400 hover:bg-white/5 transition-all duration-300">
+            <i class="fa-solid fa-trash-can"></i>
+        </button>
+    </header>
+
+    <!-- Chat Container -->
+    <main id="chat-container" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 scroll-smooth pb-28">
+        <!-- Welcome Message -->
+        <div class="flex flex-col items-center justify-center mt-10 opacity-70 mb-10 text-center space-y-4 animate-fade-in">
+            <div class="w-20 h-20 rounded-full bg-green-900/20 border border-green-500/20 flex items-center justify-center shadow-[0_0_30px_rgba(34,197,94,0.1)]">
+                <i class="fa-solid fa-robot text-3xl text-green-500"></i>
+            </div>
+            <h2 class="text-2xl font-semibold text-white">Готова к работе</h2>
+        </div>
+    </main>
+
+    <!-- Input Area -->
+    <footer id="footer" class="flex-none p-2 md:p-6 bg-transparent w-full z-40">
+        <div class="glass-panel w-full md:max-w-5xl mx-auto rounded-2xl p-2 relative shadow-2xl shadow-black/50">
+            <form id="chat-form" class="flex gap-2 items-end">
+                <div class="relative flex-1">
+                    <textarea 
+                        id="user-input" 
+                        rows="1"
+                        placeholder="Напишите сообщение..." 
+                        class="w-full bg-transparent text-gray-100 placeholder-gray-500 text-base rounded-xl px-4 py-3 focus:outline-none border border-transparent focus:border-green-500/30 transition-all resize-none max-h-40 font-sans"
+                        oninput="handleInput(this)"
+                        onfocus="focusInput()"
+                        onblur="focusBlur()"
+                        onkeydown="handleEnter(event)"
+                    ></textarea>
+                </div>
+                <button 
+                    type="submit" 
+                    id="send-btn"
+                    class="h-[50px] w-[50px] flex-shrink-0 rounded-xl bg-green-600 hover:bg-green-500 text-white shadow-lg shadow-green-900/50 transition-all duration-300 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed group"
+                >
+                    <i class="fa-solid fa-paper-plane text-lg group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"></i>
+                </button>
+            </form>
+        </div>
+    </footer>
+
+    <script>
+        // --- CONFIGURATION ---
+        const API_KEY = 'Tjx8hlgYwDWL2tr9YpACDX2kSEFXmSFq';
+        const API_URL = 'https://api.mistral.ai/v1/chat/completions';
+        const MODEL = 'mistral-large-latest'; 
+
+        let chatHistory = [
+            { role: "system", content: "Ты — Poison Eve, продвинутый и стильный ИИ-ассистент. Отвечай точно, используй Markdown (жирный шрифт, таблицы, списки) для структурирования информации. Будь вежлива." }
+        ];
+
+        // --- DOM ELEMENTS ---
+        const chatContainer = document.getElementById('chat-container');
+        const chatForm = document.getElementById('chat-form');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        const footer = document.getElementById('footer');
+
+
+        // --- MARKED SETUP ---
+        marked.setOptions({
+            highlight: function(code, lang) {
+                if (lang && hljs.getLanguage(lang)) {
+                    return hljs.highlight(code, { language: lang }).value;
+                }
+                return hljs.highlightAuto(code).value;
+            },
+            breaks: true,
+            gfm: true
+        });
+
+        // --- SCROLL & FOCUS LOGIC (Изменено) ---
+        
+        function handleInput(el) {
+            el.style.height = 'auto';
+            el.style.height = el.scrollHeight + 'px';
+            // УДАЛЕНО: scrollToBottom() - не прокручиваем при печати
+        }
+
+        function scrollToBottom() {
+            // Use requestAnimationFrame for smoother scrolling
+            requestAnimationFrame(() => {
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            });
+        }
+        
+        // CRITICAL FIX: Ensures input is visible on mobile when keyboard opens
+        function focusInput() {
+            // Находим позицию поля ввода относительно верхней границы чат-контейнера
+            const inputRect = userInput.getBoundingClientRect();
+            const chatRect = chatContainer.getBoundingClientRect();
+            
+            // Вычисляем, насколько нужно прокрутить чат-контейнер
+            const scrollOffset = (inputRect.top - chatRect.top) - (chatRect.height - inputRect.height - footer.offsetHeight + 10);
+
+            // Применяем прокрутку, чтобы поле ввода было видно
+            setTimeout(() => {
+                 chatContainer.scrollTop += scrollOffset;
+            }, 100);
+        }
+
+        function focusBlur() {
+            // УДАЛЕНО: scrollToBottom() - не прокручиваем при потере фокуса
+        }
+
+        // --- COPY CODE LOGIC ---
+
+        function copyCode(button) {
+            const codeBlock = button.parentElement.nextElementSibling.querySelector('code');
+            if (!codeBlock) return;
+
+            // 1. Создаем временный элемент textarea для копирования
+            const textarea = document.createElement('textarea');
+            textarea.value = codeBlock.innerText;
+            document.body.appendChild(textarea);
+            
+            // 2. Выделяем и копируем текст
+            textarea.select();
+            // Используем document.execCommand('copy') для совместимости с iFrame
+            document.execCommand('copy');
+            
+            // 3. Удаляем временный элемент
+            document.body.removeChild(textarea);
+
+            // 4. Визуальный фидбек
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fa-solid fa-check mr-1"></i> Скопировано!';
+            button.classList.add('bg-green-700');
+            button.classList.remove('hover:bg-green-600');
+
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.classList.remove('bg-green-700');
+                button.classList.add('hover:bg-green-600');
+            }, 2000);
+        }
+
+        function addCopyButtons(element) {
+            element.querySelectorAll('pre').forEach(pre => {
+                // Извлекаем язык из первого класса <code> (например, language-javascript)
+                const codeElement = pre.querySelector('code');
+                let lang = 'Code';
+                if (codeElement && codeElement.className) {
+                    const match = codeElement.className.match(/language-(\w+)/);
+                    if (match) {
+                        lang = match[1].charAt(0).toUpperCase() + match[1].slice(1);
+                    }
+                }
+
+                // 1. Создаем контейнер для всего блока кода
+                const container = document.createElement('div');
+                container.className = 'code-container';
+
+                // 2. Создаем заголовок с кнопкой
+                const header = document.createElement('div');
+                header.className = 'code-header';
+
+                const langLabel = document.createElement('span');
+                langLabel.textContent = lang;
+                header.appendChild(langLabel);
+
+                const copyButton = document.createElement('button');
+                copyButton.className = 'px-2 py-1 rounded text-white bg-green-800 hover:bg-green-600 transition-colors focus:outline-none text-xs';
+                copyButton.innerHTML = '<i class="fa-solid fa-copy mr-1"></i> Копировать';
+                
+                // Привязываем функцию копирования
+                copyButton.onclick = () => copyCode(copyButton);
+                
+                header.appendChild(copyButton);
+                container.appendChild(header);
+
+                // 3. Перемещаем <pre> внутрь контейнера
+                // Нужно убедиться, что <pre> является дочерним элементом родителя (prose div)
+                const parent = pre.parentNode;
+                if (parent) {
+                    parent.insertBefore(container, pre);
+                    container.appendChild(pre);
+                }
+            });
+        }
+
+        // --- EVENT LISTENERS ---
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await sendMessage();
+        });
+
+        function handleEnter(e) {
+            // Send on Enter only for desktop (wider than 768px)
+            if (e.key === 'Enter' && !e.shiftKey) {
+                if (window.innerWidth > 768) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            }
+        }
+
+        // --- CORE FUNCTIONS ---
+
+        async function sendMessage() {
+            const text = userInput.value.trim();
+            if (!text) return;
+
+            // 1. Add User Message
+            appendMessage('user', text);
+            userInput.value = '';
+            userInput.style.height = 'auto'; 
+            
+            // 2. Add Loading State
+            const loadingId = appendLoading();
+            disableInput(true);
+
+            // 3. Prepare Payload
+            chatHistory.push({ role: "user", content: text });
+
+            try {
+                // 4. API Call with retry mechanism (Exponential Backoff)
+                const response = await fetchWithRetry(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${API_KEY}`
+                    },
+                    body: JSON.stringify({
+                        model: MODEL,
+                        messages: chatHistory,
+                        temperature: 0.7,
+                        max_tokens: 2000
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                const aiResponse = data.choices[0].message.content;
+
+                // 5. Update History & UI
+                chatHistory.push({ role: "assistant", content: aiResponse });
+                removeLoading(loadingId);
+                const newMessage = appendMessage('assistant', aiResponse);
+                
+                // CRITICAL: Добавляем кнопки копирования после рендеринга
+                if (newMessage) {
+                    addCopyButtons(newMessage);
+                }
+
+            } catch (error) {
+                removeLoading(loadingId);
+                // Silent error log as requested
+                console.error("API Error Log:", error);
+            } finally {
+                disableInput(false);
+                userInput.focus();
+                // Оставлено: scrollToBottom() - прокручиваем только после получения ответа
+                scrollToBottom();
+            }
+        }
+
+        // Helper for Exponential Backoff (retry)
+        async function fetchWithRetry(url, options, maxRetries = 3) {
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const response = await fetch(url, options);
+                    if (response.status !== 429 && response.ok) {
+                        return response;
+                    } else if (response.status === 429 && i < maxRetries - 1) {
+                        // Implement exponential backoff delay
+                        const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        continue; // Retry the request
+                    } else {
+                        return response; // Return the error response for non-retryable errors or after last retry
+                    }
+                } catch (error) {
+                    if (i < maxRetries - 1) {
+                        const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        continue;
+                    }
+                    throw error;
+                }
+            }
+        }
+
+        function appendMessage(role, content) {
+            const div = document.createElement('div');
+            const isUser = role === 'user';
+            
+            div.className = `flex w-full ${isUser ? 'justify-end' : 'justify-start'} animate-fade-in`;
+            
+            const bubbleClasses = isUser 
+                ? 'message-user text-white rounded-2xl rounded-br-sm' 
+                : 'message-ai text-gray-100 rounded-2xl rounded-bl-sm';
+
+            // Icons
+            const icon = isUser 
+                ? '<i class="fa-solid fa-user"></i>' 
+                : '<i class="fa-solid fa-dragon"></i>';
+
+            const iconContainer = `
+                <div class="flex-shrink-0 h-8 w-8 rounded-full flex items-center justify-center ${isUser ? 'bg-green-700 ml-2' : 'bg-gray-700 mr-2 border border-green-500/30'}">
+                    ${icon}
+                </div>
+            `;
+
+            // Formatting
+            const contentWrapper = document.createElement('div');
+            
+            if (isUser) {
+                // Для пользователя просто вставляем текст
+                contentWrapper.innerHTML = escapeHtml(content).replace(/\n/g, '<br>');
+            } else {
+                // Для ИИ парсим Markdown и затем добавляем кнопки копирования
+                contentWrapper.innerHTML = marked.parse(content);
+            }
+
+            const messageHtml = `
+                <div class="flex max-w-[95%] md:max-w-[90%] ${isUser ? 'flex-row-reverse' : 'flex-row'} items-start">
+                    ${iconContainer}
+                    <div id="message-bubble-${Date.now()}" class="${bubbleClasses} px-5 py-3 shadow-md overflow-hidden min-w-[50%]">
+                        <div class="prose prose-invert prose-sm md:prose-base max-w-none break-words leading-relaxed" id="prose-content-${Date.now()}">
+                            ${contentWrapper.innerHTML}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            div.innerHTML = messageHtml;
+            chatContainer.appendChild(div);
+            // Оставлено: scrollToBottom() - прокручиваем при добавлении сообщения
+            scrollToBottom();
+            
+            // Возвращаем элемент для post-обработки (добавления кнопок)
+            return div.querySelector('.prose'); 
+        }
+
+        function appendLoading() {
+            const id = 'loading-' + Date.now();
+            const div = document.createElement('div');
+            div.id = id;
+            div.className = 'flex w-full justify-start animate-fade-in';
+            div.innerHTML = `
+                <div class="flex items-start">
+                    <div class="flex-shrink-0 h-8 w-8 rounded-full bg-gray-700 mr-2 border border-green-500/30 flex items-center justify-center">
+                        <i class="fa-solid fa-dragon text-green-400 text-xs"></i>
+                    </div>
+                    <div class="message-ai px-4 py-3 rounded-2xl rounded-bl-sm flex items-center gap-1">
+                        <div class="w-2 h-2 bg-green-500 rounded-full typing-dot"></div>
+                        <div class="w-2 h-2 bg-green-500 rounded-full typing-dot"></div>
+                        <div class="w-2 h-2 bg-green-500 rounded-full typing-dot"></div>
+                    </div>
+                </div>
+            `;
+            chatContainer.appendChild(div);
+            // Оставлено: scrollToBottom() - прокручиваем при добавлении индикатора загрузки
+            scrollToBottom();
+            return id;
+        }
+
+        function removeLoading(id) {
+            const el = document.getElementById(id);
+            if (el) el.remove();
+        }
+
+        function disableInput(disabled) {
+            userInput.disabled = disabled;
+            sendBtn.disabled = disabled;
+            if(!disabled) {
+                setTimeout(() => userInput.focus(), 100);
+            }
+        }
+
+        function clearChat() {
+            if(confirm('Очистить историю?')) {
+                chatContainer.innerHTML = '';
+                chatHistory = [chatHistory[0]];
+                chatContainer.innerHTML = `
+                 <div class="flex flex-col items-center justify-center mt-10 opacity-70 mb-10 text-center space-y-4 animate-fade-in">
+                    <div class="w-20 h-20 rounded-full bg-green-900/20 border border-green-500/20 flex items-center justify-center shadow-[0_0_30px_rgba(34,197,94,0.1)]">
+                        <i class="fa-solid fa-robot text-3xl text-green-500"></i>
+                    </div>
+                    <h2 class="text-2xl font-semibold text-white">Готова к работе</h2>
+                </div>
+                `;
+            }
+        }
+
+        function escapeHtml(unsafe) {
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
+
+
