@@ -2,14 +2,11 @@
 <html lang="ru" class="dark">
 <head>
     <meta charset="UTF-8">
-    <!-- Critical: max-scale=1.0 prevents iOS zoom issues when keyboard opens -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Poison Eve AI</title>
     
-    <head>
     <link rel="icon" href="icon.ico" type="image/x-icon">
     <link rel="shortcut icon" href="icon.ico" type="image/x-icon">
-    </head>
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
@@ -72,7 +69,6 @@
     </script>
 
     <style>
-        /* CRITICAL: Use dvh for true full screen on mobile (handles address bar) */
         body {
             background-color: #050505;
             background-image: 
@@ -87,27 +83,31 @@
             flex-direction: column;
         }
 
-        /* Custom Scrollbar */
+        /* Custom Scrollbar (Optimized for dark theme) */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #0a0a0a; }
         ::-webkit-scrollbar-thumb { background: #15803d; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #22c55e; }
 
-        /* Markdown Styles */
+        /* Markdown Styles (Optimized) */
         .prose pre {
             background-color: #0f1210;
             border: 1px solid #166534;
             margin-top: 0.5em;
             margin-bottom: 0.5em;
             padding: 0;
+            border-radius: 0.5rem;
         }
+        
         .prose code {
             color: #4ade80;
             background-color: rgba(22, 163, 74, 0.1);
             padding: 0.2em 0.4em;
             border-radius: 0.25em;
             font-weight: 400;
+            transition: background-color 0.1s ease; 
         }
+        
         .prose pre code {
             color: inherit;
             background-color: transparent;
@@ -115,7 +115,51 @@
             display: block;
             overflow-x: auto;
         }
+
+        /* --- FIX: INTELLIGENT HIGHLIGHTING (Added !important) --- */
+        /* Эти правила применяются только к блокам с кодом, помеченным как 'markdown' */
         
+        /* Жирный текст (например, **текст**) */
+        code.language-markdown .hljs-strong {
+            font-weight: 700 !important;
+            color: #fff !important; /* Убеждаемся, что жирный текст выделяется */
+        }
+        
+        /* Курсив (например, *текст*) */
+        code.language-markdown .hljs-emphasis {
+            font-style: italic !important;
+            color: #d1d5db !important;
+        }
+        
+        /* Заголовки (например, # Заголовок) */
+        code.language-markdown .hljs-section {
+            font-weight: 700 !important;
+            color: #86efac !important; 
+        }
+        
+        /* Маркеры списков */
+        code.language-markdown .hljs-bullet {
+            color: #4ade80 !important;
+        }
+
+        /* Инлайн-код внутри блока Markdown */
+        code.language-markdown .hljs-code {
+            color: #86efac !important;
+        }
+        /* ----------------------------------------------------- */
+        
+        /* IMAGE STYLES FOR CHAT (Оптимизация: Адаптивность и тени) */
+        .prose img {
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 10px -2px rgba(0, 0, 0, 0.7);
+            max-width: 100%;
+            height: auto;
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
         .code-container {
             position: relative;
             margin-top: 1rem;
@@ -155,7 +199,7 @@
             padding: 8px 16px;
         }
 
-        .prose strong { color: #fff; }
+        .prose strong { color: #fff; font-weight: 700; }
         .prose h1, .prose h2, .prose h3 { color: #86efac; }
         .prose a { color: #4ade80; text-decoration: underline; }
         .prose blockquote { border-left-color: #22c55e; color: #d1d5db; }
@@ -172,11 +216,15 @@
             background: linear-gradient(135deg, #166534 0%, #14532d 100%);
             border: 1px solid #22c55e;
             box-shadow: 0 4px 15px -3px rgba(34, 197, 94, 0.2);
+            border-radius: 1rem 1rem 0.2rem 1rem;
         }
         
         .message-ai {
-            background: rgba(30, 30, 30, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            padding-left: 0;
+            padding-right: 0;
         }
 
         .typing-dot { animation: typing 1.4s infinite ease-in-out both; }
@@ -184,7 +232,6 @@
         .typing-dot:nth-child(2) { animation-delay: -0.16s; }
         @keyframes typing { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
         
-        /* Model Toggle Button */
         .model-toggle {
             @apply flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-mono border transition-all duration-300 cursor-pointer select-none;
         }
@@ -196,7 +243,7 @@
         }
     </style>
 </head>
-<body class="antialiased selection:bg-green-500 selection:text-black">
+<body class="antialiased selection:bg-green-500/30 selection:text-green-50">
 
     <!-- Header -->
     <header class="glass-panel flex-none sticky top-0 z-50 flex items-center justify-between px-4 py-3 border-b border-white/5">
@@ -214,13 +261,13 @@
         </div>
         
         <div class="flex items-center gap-2">
-            <!-- Model Toggle Button -->
             <button id="model-toggle" class="model-toggle" onclick="toggleModel()" data-mode="large" title="Переключить модель (Turbo/Smart)">
                 <i id="model-icon" class="fa-solid fa-brain"></i>
                 <span id="model-text">LARGE</span>
             </button>
 
-            <button onclick="clearChat()" class="p-2 rounded-lg text-gray-400 hover:text-green-400 hover:bg-white/5 transition-all duration-300" title="Очистить историю">
+            <!-- Используем showConfirmModal() для вызова пользовательского модального окна -->
+            <button onclick="showConfirmModal()" class="p-2 rounded-lg text-gray-400 hover:text-green-400 hover:bg-white/5 transition-all duration-300" title="Очистить историю">
                 <i class="fa-solid fa-trash-can"></i>
             </button>
         </div>
@@ -228,7 +275,6 @@
 
     <!-- Chat Container -->
     <main id="chat-container" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 scroll-smooth pb-28">
-        <!-- Welcome Message -->
         <div class="flex flex-col items-center justify-center mt-10 opacity-70 mb-10 text-center space-y-4 animate-fade-in">
             <div class="w-20 h-20 rounded-full bg-green-900/20 border border-green-500/20 flex items-center justify-center shadow-[0_0_30px_rgba(34,197,94,0.1)]">
                 <i class="fa-solid fa-robot text-3xl text-green-500"></i>
@@ -264,24 +310,50 @@
         </div>
     </footer>
 
+    <!-- Custom Confirmation Modal (Замена window.confirm()) -->
+    <div id="confirm-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/70 transition-opacity duration-300">
+        <div class="glass-panel w-11/12 max-w-sm rounded-xl p-6 space-y-4 border-green-500/30 shadow-2xl shadow-green-900/50" role="dialog" aria-modal="true">
+            <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-triangle-exclamation text-yellow-500"></i>
+                Очистить историю?
+            </h3>
+            <p class="text-gray-400 text-sm">
+                Вы уверены, что хотите удалить всю историю чата? Это действие нельзя отменить.
+            </p>
+            <div class="flex justify-end gap-3">
+                <button 
+                    onclick="hideConfirmModal()" 
+                    class="px-4 py-2 text-sm rounded-lg text-gray-300 border border-gray-700 hover:bg-white/5 transition-colors"
+                >
+                    Отмена
+                </button>
+                <button 
+                    onclick="confirmClearChat()" 
+                    class="px-4 py-2 text-sm rounded-lg bg-red-600 hover:bg-red-500 text-white transition-colors shadow-md shadow-red-900/50"
+                >
+                    Очистить
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- End Custom Confirmation Modal -->
+
     <script>
         // --- CONFIGURATION ---
+        // Ключ и URL API Mistral
         const API_KEY = 'Tjx8hlgYwDWL2tr9YpACDX2kSEFXmSFq';
         const API_URL = 'https://api.mistral.ai/v1/chat/completions';
         
-        // Models
         const MODELS = {
             small: 'mistral-small-latest',
             large: 'mistral-large-latest'
         };
-        // Default to Large
         let currentModel = MODELS.large; 
         
-        // НОВОЕ: Переменная состояния для отслеживания начала чата
         let isChatStarted = false; 
 
         let chatHistory = [
-            { role: "system", content: "Ты — Poison Eve, продвинутый и стильный ИИ-ассистент. Отвечай точно, используй Markdown (жирный шрифт, таблицы, списки) для структурирования информации. Будь вежлива." }
+            { role: "system", content: "Ты — Poison Eve, продвинутый и стильный ИИ-ассистент. Отвечай точно, используй Markdown (жирный шрифт, таблицы, списки) для структурирования информации. Если нужно показать изображение, используй синтаксис Markdown: ![Описание](URL изображения). Выделения текста не работают в блоках." }
         ];
 
         // --- DOM ELEMENTS ---
@@ -289,74 +361,102 @@
         const chatForm = document.getElementById('chat-form');
         const userInput = document.getElementById('user-input');
         const sendBtn = document.getElementById('send-btn');
-        const footer = document.getElementById('footer');
+        const confirmModal = document.getElementById('confirm-modal');
         
-        // Toggle Elements
         const toggleBtn = document.getElementById('model-toggle');
         const toggleIcon = document.getElementById('model-icon');
         const toggleText = document.getElementById('model-text');
 
-        // НОВОЕ: Функция для обновления состояния кнопки переключения модели
-        function updateModelToggleState() {
-            const toggleBtn = document.getElementById('model-toggle');
+        // --- MODAL & CONFIRMATION LOGIC ---
+
+        function showConfirmModal() {
+            confirmModal.classList.remove('hidden');
+            confirmModal.classList.add('flex');
+        }
+
+        function hideConfirmModal() {
+            confirmModal.classList.remove('flex');
+            confirmModal.classList.add('hidden');
+        }
+
+        function confirmClearChat() {
+            hideConfirmModal();
+            clearChatHistory();
+        }
+        
+        function clearChatHistory() {
+            chatContainer.innerHTML = '';
+            // Сбрасываем историю до системного промпта
+            chatHistory = [chatHistory[0]];
             
-            if (isChatStarted) {
-                toggleBtn.disabled = true;
-                // Визуально отключаем кнопку
-                toggleBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                // Убираем стили наведения, чтобы кнопка не реагировала
-                toggleBtn.classList.remove('hover:text-green-400', 'hover:border-green-500/30'); 
-            } else {
-                toggleBtn.disabled = false;
-                // Визуально включаем кнопку
-                toggleBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                // Стили наведения будут автоматически применены через CSS на основе data-mode
-            }
+            isChatStarted = false;
+            updateModelToggleState(); 
+
+            // Показываем приветственное сообщение
+            chatContainer.innerHTML = `
+                <div class="flex flex-col items-center justify-center mt-10 opacity-70 mb-10 text-center space-y-4 animate-fade-in">
+                    <div class="w-20 h-20 rounded-full bg-green-900/20 border border-green-500/20 flex items-center justify-center shadow-[0_0_30px_rgba(34,197,94,0.1)]">
+                        <i class="fa-solid fa-robot text-3xl text-green-500"></i>
+                    </div>
+                    <h2 class="text-2xl font-semibold text-white">Готова к работе</h2>
+                </div>
+            `;
         }
 
         // --- MODEL TOGGLE LOGIC ---
-        function toggleModel() {
-            // ПРОВЕРКА: Если чат начат, просто выходим
+        function updateModelToggleState() {
+            const toggleBtn = document.getElementById('model-toggle');
             if (isChatStarted) {
-                return; 
+                toggleBtn.disabled = true;
+                toggleBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                toggleBtn.classList.remove('hover:text-green-400', 'hover:border-green-500/30'); 
+            } else {
+                toggleBtn.disabled = false;
+                toggleBtn.classList.remove('opacity-50', 'cursor-not-allowed');
             }
+        }
+
+        function toggleModel() {
+            if (isChatStarted) return; 
 
             const currentMode = toggleBtn.getAttribute('data-mode');
-            
             if (currentMode === 'large') {
-                // Switch to Small
                 currentModel = MODELS.small;
                 toggleBtn.setAttribute('data-mode', 'small');
                 toggleIcon.className = 'fa-solid fa-bolt';
                 toggleText.textContent = 'FAST';
             } else {
-                // Switch to Large
                 currentModel = MODELS.large;
                 toggleBtn.setAttribute('data-mode', 'large');
                 toggleIcon.className = 'fa-solid fa-brain';
                 toggleText.textContent = 'LARGE';
             }
-            updateModelToggleState(); // Обновляем, чтобы применить стили
+            updateModelToggleState();
         }
 
         // --- MARKED SETUP ---
         marked.setOptions({
+            // Оптимизация: используем highlight.js только для обычных языков, но не для 'markdown'
             highlight: function(code, lang) {
                 if (lang && hljs.getLanguage(lang)) {
+                     // Для блока 'markdown' используем его грамматику, чтобы получить нужные классы (hljs-strong, hljs-section)
+                    if (lang.toLowerCase() === 'markdown') {
+                        return hljs.highlight(code, { language: 'markdown' }).value;
+                    }
+                    // Для всех остальных языков - стандартная подсветка
                     return hljs.highlight(code, { language: lang }).value;
                 }
+                // Автоматическое определение, если язык не указан
                 return hljs.highlightAuto(code).value;
             },
             breaks: true,
             gfm: true
         });
 
-        // --- SCROLL & FOCUS LOGIC ---
-        
+        // --- UI UTILITIES ---
         function handleInput(el) {
             el.style.height = 'auto';
             el.style.height = el.scrollHeight + 'px';
-            // ВОЗВРАЩЕНО: Прокрутка при вводе текста, чтобы видеть курсор
             scrollToBottom(); 
         }
 
@@ -367,33 +467,52 @@
         }
         
         function focusInput() {
-            // Задержка, чтобы клавиатура успела открыться
             setTimeout(() => {
                  scrollToBottom();
-                 // Немного подскроллить контент, если нужно
                  chatContainer.scrollTop += 50; 
             }, 300);
         }
 
-        function focusBlur() {
-            // Ничего не делаем
-        }
+        function focusBlur() {}
 
-        // --- COPY CODE LOGIC ---
-
+        // --- COPY CODE LOGIC (Оптимизация: Modern Clipboard API + Fallback) ---
         function copyCode(button) {
             const codeBlock = button.parentElement.nextElementSibling.querySelector('code');
             if (!codeBlock) return;
 
-            const textarea = document.createElement('textarea');
-            textarea.value = codeBlock.innerText;
-            document.body.appendChild(textarea);
-            
-            textarea.select();
-            document.execCommand('copy');
-            
-            document.body.removeChild(textarea);
+            const textToCopy = codeBlock.innerText;
 
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    showCopySuccess(button);
+                }).catch(() => {
+                    // Fallback, если Modern API не сработало (например, в iframe)
+                    fallbackCopy(textToCopy, button);
+                });
+            } else {
+                fallbackCopy(textToCopy, button);
+            }
+        }
+        
+        function fallbackCopy(text, button) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed'; 
+            textarea.style.left = '-9999px';
+            document.body.appendChild(textarea);
+            textarea.select();
+            
+            try {
+                document.execCommand('copy');
+                showCopySuccess(button);
+            } catch (err) {
+                console.error('Fallback: Could not copy text: ', err);
+            } finally {
+                document.body.removeChild(textarea);
+            }
+        }
+
+        function showCopySuccess(button) {
             const originalText = button.innerHTML;
             button.innerHTML = '<i class="fa-solid fa-check mr-1"></i> Скопировано!';
             button.classList.add('bg-green-700');
@@ -414,8 +533,14 @@
                     const match = codeElement.className.match(/language-(\w+)/);
                     if (match) {
                         lang = match[1].charAt(0).toUpperCase() + match[1].slice(1);
+                        if (lang.toLowerCase() === 'markdown') {
+                            lang = 'Markdown Content';
+                        }
                     }
                 }
+
+                // Предотвращаем добавление кнопок дважды
+                if (pre.parentNode.classList.contains('code-container')) return;
 
                 const container = document.createElement('div');
                 container.className = 'code-container';
@@ -434,10 +559,11 @@
                 copyButton.onclick = () => copyCode(copyButton);
                 
                 header.appendChild(copyButton);
-                container.appendChild(header);
 
                 const parent = pre.parentNode;
                 if (parent) {
+                    // Оборачиваем pre в контейнер с шапкой
+                    container.appendChild(header);
                     parent.insertBefore(container, pre);
                     container.appendChild(pre);
                 }
@@ -458,27 +584,22 @@
                 }
             }
         }
-
+        
         // --- CORE FUNCTIONS ---
-
         async function sendMessage() {
             const text = userInput.value.trim();
             if (!text) return;
 
-            // 1. Add User Message
             appendMessage('user', text);
             userInput.value = '';
             userInput.style.height = 'auto'; 
             
-            // 2. Add Loading State
             const loadingId = appendLoading();
             disableInput(true);
 
-            // 3. Prepare Payload
             chatHistory.push({ role: "user", content: text });
 
             try {
-                // 4. API Call
                 const response = await fetchWithRetry(API_URL, {
                     method: 'POST',
                     headers: {
@@ -489,7 +610,7 @@
                         model: currentModel,
                         messages: chatHistory,
                         temperature: 0.7,
-                        max_tokens: 2000
+                        max_tokens: 4000
                     })
                 });
 
@@ -500,7 +621,6 @@
                 const data = await response.json();
                 const aiResponse = data.choices[0].message.content;
 
-                // 5. Update History & UI
                 chatHistory.push({ role: "assistant", content: aiResponse });
                 removeLoading(loadingId);
                 const newMessage = appendMessage('assistant', aiResponse);
@@ -509,18 +629,16 @@
                     addCopyButtons(newMessage);
                 }
                 
-                // НОВОЕ: Устанавливаем флаг и отключаем переключатель после первого успешного сообщения
                 if (!isChatStarted) {
                     isChatStarted = true;
                     updateModelToggleState();
                 }
 
-
             } catch (error) {
                 removeLoading(loadingId);
                 console.error("API Error Log:", error);
+                appendMessage('assistant', `Извините, произошла ошибка API: ${error.message}. Попробуйте еще раз.`);
             } finally {
-                // ВАЖНО: Разблокируем, но НЕ ставим фокус обратно
                 disableInput(false);
                 scrollToBottom();
             }
@@ -557,15 +675,15 @@
             div.className = `flex w-full ${isUser ? 'justify-end' : 'justify-start'} animate-fade-in`;
             
             const bubbleClasses = isUser 
-                ? 'message-user text-white rounded-2xl rounded-br-sm' 
-                : 'message-ai text-gray-100 rounded-2xl rounded-bl-sm';
+                ? 'message-user text-white px-5 py-3 shadow-md overflow-hidden min-w-[30%]' 
+                : 'message-ai text-gray-100 overflow-hidden w-full';
 
             const icon = isUser 
                 ? '<i class="fa-solid fa-user"></i>' 
                 : '<i class="fa-solid fa-dragon"></i>';
 
             const iconContainer = `
-                <div class="flex-shrink-0 h-8 w-8 rounded-full flex items-center justify-center ${isUser ? 'bg-green-700 ml-2' : 'bg-gray-700 mr-2 border border-green-500/30'}">
+                <div class="flex-shrink-0 h-8 w-8 rounded-full flex items-center justify-center ${isUser ? 'bg-green-700 ml-2' : 'bg-transparent text-green-400 mr-3 border border-green-500/30'}">
                     ${icon}
                 </div>
             `;
@@ -579,9 +697,9 @@
             }
 
             const messageHtml = `
-                <div class="flex max-w-[95%] md:max-w-[90%] ${isUser ? 'flex-row-reverse' : 'flex-row'} items-start">
+                <div class="flex max-w-full md:max-w-[95%] ${isUser ? 'flex-row-reverse items-end' : 'flex-row items-start'}">
                     ${iconContainer}
-                    <div id="message-bubble-${Date.now()}" class="${bubbleClasses} px-5 py-3 shadow-md overflow-hidden min-w-[50%]">
+                    <div id="message-bubble-${Date.now()}" class="${bubbleClasses}">
                         <div class="prose prose-invert prose-sm md:prose-base max-w-none break-words leading-relaxed" id="prose-content-${Date.now()}">
                             ${contentWrapper.innerHTML}
                         </div>
@@ -603,10 +721,10 @@
             div.className = 'flex w-full justify-start animate-fade-in';
             div.innerHTML = `
                 <div class="flex items-start">
-                    <div class="flex-shrink-0 h-8 w-8 rounded-full bg-gray-700 mr-2 border border-green-500/30 flex items-center justify-center">
-                        <i class="fa-solid fa-dragon text-green-400 text-xs"></i>
+                    <div class="flex-shrink-0 h-8 w-8 rounded-full bg-transparent text-green-400 mr-3 border border-green-500/30 flex items-center justify-center">
+                        <i class="fa-solid fa-dragon text-xs"></i>
                     </div>
-                    <div class="message-ai px-4 py-3 rounded-2xl rounded-bl-sm flex items-center gap-1">
+                    <div class="message-ai py-2 flex items-center gap-1">
                         <div class="w-2 h-2 bg-green-500 rounded-full typing-dot"></div>
                         <div class="w-2 h-2 bg-green-500 rounded-full typing-dot"></div>
                         <div class="w-2 h-2 bg-green-500 rounded-full typing-dot"></div>
@@ -628,28 +746,6 @@
             sendBtn.disabled = disabled;
         }
 
-        function clearChat() {
-            // Замена confirm() на window.confirm() для лучшей совместимости
-            if(window.confirm('Очистить историю?')) {
-                chatContainer.innerHTML = '';
-                // Сбрасываем историю до системного промпта
-                chatHistory = [chatHistory[0]];
-                
-                // НОВОЕ: Сбрасываем состояние и включаем переключатель модели
-                isChatStarted = false;
-                updateModelToggleState(); 
-
-                chatContainer.innerHTML = `
-                 <div class="flex flex-col items-center justify-center mt-10 opacity-70 mb-10 text-center space-y-4 animate-fade-in">
-                    <div class="w-20 h-20 rounded-full bg-green-900/20 border border-green-500/20 flex items-center justify-center shadow-[0_0_30px_rgba(34,197,94,0.1)]">
-                        <i class="fa-solid fa-robot text-3xl text-green-500"></i>
-                    </div>
-                    <h2 class="text-2xl font-semibold text-white">Готова к работе</h2>
-                </div>
-                `;
-            }
-        }
-
         function escapeHtml(unsafe) {
             return unsafe
                 .replace(/&/g, "&amp;")
@@ -659,7 +755,6 @@
                 .replace(/'/g, "&#039;");
         }
         
-        // НОВОЕ: Инициализация состояния кнопки при загрузке
         document.addEventListener('DOMContentLoaded', updateModelToggleState);
     </script>
 </body>
