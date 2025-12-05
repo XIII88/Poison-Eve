@@ -13,6 +13,8 @@
     
     <!-- Marked Library -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Marked Footnote Extension -->
+    <script src="https://cdn.jsdelivr.net/npm/marked-footnote/dist/index.umd.min.js"></script>
     
     <!-- Highlight.js -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
@@ -172,6 +174,40 @@
         .prose a { color: #4ade80; text-decoration: underline; }
         .prose blockquote { border-left-color: #22c55e; color: #d1d5db; }
 
+        /* FOOTNOTES STYLES */
+        .footnotes {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(22, 163, 74, 0.4);
+            font-size: 0.85rem;
+            color: #9ca3af;
+        }
+        .footnotes ol {
+            list-style-type: decimal;
+            padding-left: 1.5rem;
+        }
+        .footnotes li {
+            margin-bottom: 0.25rem;
+        }
+        /* Ссылка-цифра в тексте */
+        sup {
+            color: #4ade80;
+            font-weight: bold;
+        }
+        sup a {
+            text-decoration: none !important;
+        }
+        /* Ссылка возврата */
+        .footnote-backref {
+            color: #22c55e;
+            text-decoration: none;
+            margin-left: 0.25rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .footnote-backref:hover {
+            color: #4ade80;
+        }
+
         /* Glassmorphism & UI */
         .glass-panel {
             background: rgba(18, 18, 18, 0.7);
@@ -307,6 +343,11 @@
     <!-- End Custom Confirmation Modal -->
 
     <script>
+        // Инициализация сносок Marked
+        if (typeof markedFootnote !== 'undefined') {
+            marked.use(markedFootnote());
+        }
+
         // --- CONFIGURATION ---
         // Ключ и URL API Mistral
         const API_KEY = 'Tjx8hlgYwDWL2tr9YpACDX2kSEFXmSFq';
@@ -321,7 +362,7 @@
         let isChatStarted = false; 
 
         let chatHistory = [
-            { role: "system", content: "Ты — Poison Eve, продвинутый и стильный ИИ-ассистент. Отвечай точно, используй Markdown (жирный шрифт, таблицы, списки) для структурирования информации. Если нужно показать изображение, используй синтаксис Markdown: ![Описание](URL изображения). Выделения текста не работают в блоках." }
+            { role: "system", content: "Ты — Poison Eve, продвинутый и стильный ИИ-ассистент. Отвечай точно, используй Markdown (жирный шрифт, таблицы, списки) для структурирования информации. Если нужно показать изображение, используй синтаксис Markdown: ![Описание](URL изображения). Выделения текста не работают в блоках. Это текст с сноской[^1]. [^1]: Это сноска, пиши ее там где нужно." }
         ];
 
         // --- DOM ELEMENTS ---
@@ -401,25 +442,6 @@
             }
             updateModelToggleState();
         }
-
-        // --- MARKED SETUP ---
-        marked.setOptions({
-            // Оптимизация: используем highlight.js только для обычных языков, но не для 'markdown'
-            highlight: function(code, lang) {
-                if (lang && hljs.getLanguage(lang)) {
-                     // Для блока 'markdown' используем его грамматику, чтобы получить нужные классы (hljs-strong, hljs-section)
-                    if (lang.toLowerCase() === 'markdown') {
-                        return hljs.highlight(code, { language: 'markdown' }).value;
-                    }
-                    // Для всех остальных языков - стандартная подсветка
-                    return hljs.highlight(code, { language: lang }).value;
-                }
-                // Автоматическое определение, если язык не указан
-                return hljs.highlightAuto(code).value;
-            },
-            breaks: true,
-            gfm: true
-        });
 
         // --- UI UTILITIES ---
         function handleInput(el) {
@@ -727,5 +749,6 @@
     </script>
 </body>
 </html>
+
 
 
