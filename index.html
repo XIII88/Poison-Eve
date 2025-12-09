@@ -54,6 +54,7 @@
                         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                         'glow': 'glow 2s ease-in-out infinite alternate',
                         'fade-in': 'fadeIn 0.3s ease-out',
+                        'slide-down': 'slideDown 0.3s ease-out forwards',
                     },
                     keyframes: {
                         glow: {
@@ -62,6 +63,10 @@
                         },
                         fadeIn: {
                             '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        slideDown: {
+                            '0%': { opacity: '0', transform: 'translateY(-10px)' },
                             '100%': { opacity: '1', transform: 'translateY(0)' },
                         }
                     }
@@ -85,40 +90,63 @@
             flex-direction: column;
         }
 
-        /* Custom Scrollbar (Optimized for dark theme) */
+        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #0a0a0a; }
         ::-webkit-scrollbar-thumb { background: #15803d; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #22c55e; }
 
-        /* Markdown Styles (Optimized) */
+        /* Markdown Styles */
         .prose pre {
             background-color: #0f1210;
             border: 1px solid #166534;
             margin-top: 0.5em;
             margin-bottom: 0.5em;
-            padding: 0;
+            /* Стандартный отступ для внешнего блока */
+            padding: 1rem !important; 
             border-radius: 0.5rem;
+            overflow-x: auto;
+            position: relative; /* Context for positioning if needed */
         }
         
+        /* Highlight.js overrides */
+        .hljs {
+            background: transparent !important;
+            padding: 0 !important;
+        }
+
+        /* NUCLEAR OPTION for removing bold/italics inside code blocks */
+        .prose pre code, 
+        .prose pre code span, 
+        .hljs-strong, 
+        .hljs-emphasis,
+        code[class*="language-"] *,
+        pre[class*="language-"] * {
+            font-weight: normal !important;
+            font-style: normal !important;
+        }
+
         .prose code {
             color: #4ade80;
             background-color: rgba(22, 163, 74, 0.1);
             padding: 0.2em 0.4em;
             border-radius: 0.25em;
             font-weight: 400;
+            font-family: 'JetBrains Mono', monospace;
             transition: background-color 0.1s ease; 
         }
         
+        /* Code inside PRE blocks */
         .prose pre code {
             color: inherit;
             background-color: transparent;
-            padding: 1rem;
+            padding: 0 0 1.5rem 0 !important; 
             display: block;
-            overflow-x: auto;
+            min-width: 100%;
+            /* Ensure line height is consistent */
+            line-height: 1.5; 
         }
         
-        /* IMAGE STYLES FOR CHAT (Оптимизация: Адаптивность и тени) */
         .prose img {
             border-radius: 0.75rem;
             box-shadow: 0 4px 10px -2px rgba(0, 0, 0, 0.7);
@@ -127,7 +155,6 @@
             margin-top: 1rem;
             margin-bottom: 1rem;
             border: 1px solid rgba(34, 197, 94, 0.2);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
         .code-container {
@@ -149,6 +176,13 @@
             color: #86efac;
             font-size: 0.75rem;
             font-family: 'JetBrains Mono', monospace;
+        }
+        /* Remove border/radius from pre when inside container to look seamless */
+        .code-container pre {
+            margin: 0;
+            border: none;
+            border-radius: 0;
+            border-top: none; 
         }
 
         .prose table {
@@ -174,7 +208,6 @@
         .prose a { color: #4ade80; text-decoration: underline; }
         .prose blockquote { border-left-color: #22c55e; color: #d1d5db; }
 
-        /* FOOTNOTES STYLES */
         .footnotes {
             margin-top: 1.5rem;
             padding-top: 1rem;
@@ -182,33 +215,11 @@
             font-size: 0.85rem;
             color: #9ca3af;
         }
-        .footnotes ol {
-            list-style-type: decimal;
-            padding-left: 1.5rem;
-        }
-        .footnotes li {
-            margin-bottom: 0.25rem;
-        }
-        /* Ссылка-цифра в тексте */
-        sup {
-            color: #4ade80;
-            font-weight: bold;
-        }
-        sup a {
-            text-decoration: none !important;
-        }
-        /* Ссылка возврата */
-        .footnote-backref {
-            color: #22c55e;
-            text-decoration: none;
-            margin-left: 0.25rem;
-            font-family: 'JetBrains Mono', monospace;
-        }
-        .footnote-backref:hover {
-            color: #4ade80;
-        }
+        sup { color: #4ade80; font-weight: bold; }
+        sup a { text-decoration: none !important; }
+        .footnote-backref { color: #22c55e; text-decoration: none; margin-left: 0.25rem; }
 
-        /* Glassmorphism & UI */
+        /* Glassmorphism */
         .glass-panel {
             background: rgba(18, 18, 18, 0.7);
             backdrop-filter: blur(12px);
@@ -231,11 +242,6 @@
             padding-right: 0;
         }
 
-        .typing-dot { animation: typing 1.4s infinite ease-in-out both; }
-        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
-        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
-        @keyframes typing { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
-        
         .model-toggle {
             @apply flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-mono border transition-all duration-300 cursor-pointer select-none;
         }
@@ -245,35 +251,106 @@
         .model-toggle[data-mode="large"] {
             @apply bg-green-900/30 border-green-500/50 text-green-400 shadow-[0_0_10px_rgba(34,197,94,0.1)];
         }
+
+        .typing-cursor::after {
+            content: '▋';
+            display: inline-block;
+            vertical-align: baseline;
+            animation: blink 1s step-end infinite;
+            color: #22c55e;
+            margin-left: 2px;
+            font-size: 0.9em;
+        }
+        @keyframes blink { 
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        
+        /* Thinking Animation */
+        .thinking-container {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 0;
+        }
+        .thinking-dot {
+            width: 6px;
+            height: 6px;
+            background-color: #4ade80;
+            border-radius: 50%;
+            animation: poison-pulse 1.4s infinite ease-in-out both;
+        }
+        .thinking-dot:nth-child(1) { animation-delay: -0.32s; }
+        .thinking-dot:nth-child(2) { animation-delay: -0.16s; }
+        
+        @keyframes poison-pulse {
+            0%, 80%, 100% { transform: scale(0); opacity: 0.5; box-shadow: 0 0 0 rgba(74, 222, 128, 0); }
+            40% { transform: scale(1); opacity: 1; box-shadow: 0 0 8px rgba(74, 222, 128, 0.6); }
+        }
+        
+        .stop-btn { background-color: #ef4444; }
+        .stop-btn:hover { background-color: #dc2626; }
     </style>
 </head>
 <body class="antialiased selection:bg-green-500/30 selection:text-green-50">
 
+    <input type="file" id="file-input" class="hidden" accept=".txt,.md,.js,.json,.html,.css,.py,.c,.cpp,.h,.java,.xml,.log,text/*" onchange="handleFileSelect(this)">
+
     <!-- Header -->
-    <header class="glass-panel flex-none sticky top-0 z-50 flex items-center justify-between px-4 py-3 border-b border-white/5">
-        <div class="flex items-center gap-3">
-            <div class="relative w-10 h-10 flex items-center justify-center rounded-xl bg-gradient-to-tr from-green-900 to-black border border-green-500/30 shadow-[0_0_15px_rgba(34,197,94,0.3)]">
-                <i class="fa-solid fa-leaf text-green-400 text-lg"></i>
-                <div class="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_#22c55e]"></div>
+    <header class="glass-panel flex-none sticky top-0 z-50 flex flex-col border-b border-white/5 transition-all duration-300">
+        <div class="flex items-center justify-between px-4 py-3 relative z-20 bg-black/20 backdrop-blur-sm">
+            <!-- Left Side: Logo -->
+            <div class="flex items-center gap-3">
+                <div class="relative w-10 h-10 flex items-center justify-center rounded-xl bg-gradient-to-tr from-green-900 to-black border border-green-500/30 shadow-[0_0_15px_rgba(34,197,94,0.3)]">
+                    <i class="fa-solid fa-leaf text-green-400 text-lg"></i>
+                    <div class="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_#22c55e]"></div>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-white via-green-100 to-green-400 uppercase font-sans">
+                        Poison Eve
+                    </h1>
+                    <p class="text-[10px] text-green-400/60 font-mono tracking-widest">MISTRAL.AI // SYSTEM ACTIVE</p>
+                </div>
             </div>
-            <div>
-                <h1 class="text-xl font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-white via-green-100 to-green-400 uppercase font-sans">
-                    Poison Eve
-                </h1>
-                <p class="text-[10px] text-green-400/60 font-mono tracking-widest">MISTRAL.AI // SYSTEM ACTIVE</p>
+            
+            <!-- Right Side: Controls -->
+            <div class="flex items-center gap-2">
+                <button id="model-toggle" class="model-toggle" onclick="toggleModel()" data-mode="large" title="Переключить модель (Turbo/Smart)">
+                    <i id="model-icon" class="fa-solid fa-brain"></i>
+                    <span id="model-text" class="hidden sm:inline">LARGE</span>
+                </button>
+
+                <button 
+                    onclick="document.getElementById('file-input').click()"
+                    class="p-2 rounded-lg text-gray-400 hover:text-green-400 hover:bg-white/5 border border-transparent hover:border-green-500/30 transition-all duration-300 relative group"
+                    title="Прикрепить файл"
+                >
+                    <i class="fa-solid fa-paperclip"></i>
+                    <div id="file-indicator-dot" class="hidden absolute top-1.5 right-1.5 w-2 h-2 bg-green-500 rounded-full shadow-[0_0_5px_#22c55e]"></div>
+                </button>
+
+                <button onclick="showConfirmModal()" class="p-2 rounded-lg text-gray-400 hover:text-red-400 hover:bg-white/5 border border-transparent hover:border-red-500/30 transition-all duration-300" title="Очистить историю">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
             </div>
         </div>
-        
-        <div class="flex items-center gap-2">
-            <button id="model-toggle" class="model-toggle" onclick="toggleModel()" data-mode="large" title="Переключить модель (Turbo/Smart)">
-                <i id="model-icon" class="fa-solid fa-brain"></i>
-                <span id="model-text">LARGE</span>
-            </button>
 
-            <!-- Используем showConfirmModal() для вызова пользовательского модального окна -->
-            <button onclick="showConfirmModal()" class="p-2 rounded-lg text-gray-400 hover:text-green-400 hover:bg-white/5 transition-all duration-300" title="Очистить историю">
-                <i class="fa-solid fa-trash-can"></i>
-            </button>
+        <!-- File Preview Bar (Improved UI) -->
+        <div id="file-preview-bar" class="hidden absolute top-full left-0 w-full z-10 animate-slide-down">
+             <div class="bg-gradient-to-r from-green-950/90 via-black/80 to-green-950/90 border-b border-green-500/20 backdrop-blur-xl px-4 py-2.5 flex items-center justify-between shadow-lg">
+                <div class="flex items-center gap-3 overflow-hidden">
+                    <div class="w-8 h-8 rounded-lg bg-green-900/40 border border-green-500/30 flex items-center justify-center flex-shrink-0">
+                        <i class="fa-solid fa-file-code text-green-400"></i>
+                    </div>
+                    <div class="flex flex-col min-w-0">
+                        <span class="text-[10px] text-green-500/70 font-mono uppercase tracking-wider">Attached File</span>
+                        <span id="file-name-preview" class="text-sm text-green-100 truncate font-sans">filename.txt</span>
+                    </div>
+                </div>
+                <button onclick="clearFile()" class="p-1.5 rounded-md hover:bg-red-500/20 text-green-600 hover:text-red-400 transition-colors border border-transparent hover:border-red-500/30">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
         </div>
     </header>
 
@@ -298,8 +375,6 @@
                         placeholder="Напишите сообщение..." 
                         class="w-full bg-transparent text-gray-100 placeholder-gray-500 text-base rounded-xl px-4 py-3 focus:outline-none border border-transparent focus:border-green-500/30 transition-all resize-none max-h-40 font-sans"
                         oninput="handleInput(this)"
-                        onfocus="focusInput()"
-                        onblur="focusBlur()"
                         onkeydown="handleEnter(event)"
                     ></textarea>
                 </div>
@@ -308,13 +383,13 @@
                     id="send-btn"
                     class="h-[50px] w-[50px] flex-shrink-0 rounded-xl bg-green-600 hover:bg-green-500 text-white shadow-lg shadow-green-900/50 transition-all duration-300 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed group"
                 >
-                    <i class="fa-solid fa-paper-plane text-lg group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"></i>
+                    <i id="send-icon" class="fa-solid fa-paper-plane text-lg group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"></i>
                 </button>
             </form>
         </div>
     </footer>
 
-    <!-- Custom Confirmation Modal (Замена window.confirm()) -->
+    <!-- Custom Confirmation Modal -->
     <div id="confirm-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/70 transition-opacity duration-300">
         <div class="glass-panel w-11/12 max-w-sm rounded-xl p-6 space-y-4 border-green-500/30 shadow-2xl shadow-green-900/50" role="dialog" aria-modal="true">
             <h3 class="text-xl font-bold text-white flex items-center gap-2">
@@ -340,7 +415,6 @@
             </div>
         </div>
     </div>
-    <!-- End Custom Confirmation Modal -->
 
     <script>
         // Инициализация сносок Marked
@@ -349,7 +423,6 @@
         }
 
         // --- CONFIGURATION ---
-        // Ключ и URL API Mistral
         const API_KEY = 'Tjx8hlgYwDWL2tr9YpACDX2kSEFXmSFq';
         const API_URL = 'https://api.mistral.ai/v1/chat/completions';
         
@@ -359,10 +432,14 @@
         };
         let currentModel = MODELS.large; 
         
-        let isChatStarted = false; 
+        let isChatStarted = false;
+        let isGenerating = false;
+        let abortController = null;
+        let currentFileContent = null;
+        let currentFileName = null;
 
         let chatHistory = [
-            { role: "system", content: "Ты — Poison Eve, продвинутый и стильный ИИ-ассистент. Отвечай точно, используй Markdown (жирный шрифт, таблицы, списки) для структурирования информации. Если нужно показать изображение, используй синтаксис Markdown: ![Описание](URL изображения). Выделения текста не работают в блоках. Это текст с сноской[^1]. [^1]: Это сноска, пиши ее там где нужно." }
+            { role: "system", content: "Ты — Poison Eve, продвинутый и стильный ИИ-ассистент. Отвечай точно, используй Markdown (жирный шрифт, таблицы, списки) для структурирования информации. В коде используй указание языка для подсветки. Если нужно показать изображение, используй синтаксис Markdown: ![Описание](URL изображения). Выделения текста не работают в блоках. Ты умеешь ставить сноски." }
         ];
 
         // --- DOM ELEMENTS ---
@@ -370,14 +447,47 @@
         const chatForm = document.getElementById('chat-form');
         const userInput = document.getElementById('user-input');
         const sendBtn = document.getElementById('send-btn');
+        const sendIcon = document.getElementById('send-icon');
         const confirmModal = document.getElementById('confirm-modal');
+        const fileInput = document.getElementById('file-input');
+        
+        const filePreviewBar = document.getElementById('file-preview-bar');
+        const fileNamePreview = document.getElementById('file-name-preview');
+        const fileIndicatorDot = document.getElementById('file-indicator-dot');
         
         const toggleBtn = document.getElementById('model-toggle');
         const toggleIcon = document.getElementById('model-icon');
         const toggleText = document.getElementById('model-text');
 
-        // --- MODAL & CONFIRMATION LOGIC ---
+        // --- FILE HANDLING LOGIC ---
+        function handleFileSelect(input) {
+            const file = input.files[0];
+            if (!file) return;
 
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                currentFileContent = e.target.result;
+                currentFileName = file.name;
+                showFilePreview(file.name);
+            };
+            reader.readAsText(file);
+        }
+
+        function showFilePreview(name) {
+            fileNamePreview.textContent = name;
+            filePreviewBar.classList.remove('hidden');
+            fileIndicatorDot.classList.remove('hidden');
+        }
+
+        function clearFile() {
+            currentFileContent = null;
+            currentFileName = null;
+            fileInput.value = ''; 
+            filePreviewBar.classList.add('hidden');
+            fileIndicatorDot.classList.add('hidden');
+        }
+
+        // --- MODAL & CONFIRMATION LOGIC ---
         function showConfirmModal() {
             confirmModal.classList.remove('hidden');
             confirmModal.classList.add('flex');
@@ -395,13 +505,9 @@
         
         function clearChatHistory() {
             chatContainer.innerHTML = '';
-            // Сбрасываем историю до системного промпта
             chatHistory = [chatHistory[0]];
-            
             isChatStarted = false;
             updateModelToggleState(); 
-
-            // Показываем приветственное сообщение
             chatContainer.innerHTML = `
                 <div class="flex flex-col items-center justify-center mt-10 opacity-70 mb-10 text-center space-y-4 animate-fade-in">
                     <div class="w-20 h-20 rounded-full bg-green-900/20 border border-green-500/20 flex items-center justify-center shadow-[0_0_30px_rgba(34,197,94,0.1)]">
@@ -414,7 +520,6 @@
 
         // --- MODEL TOGGLE LOGIC ---
         function updateModelToggleState() {
-            const toggleBtn = document.getElementById('model-toggle');
             if (isChatStarted) {
                 toggleBtn.disabled = true;
                 toggleBtn.classList.add('opacity-50', 'cursor-not-allowed');
@@ -427,7 +532,6 @@
 
         function toggleModel() {
             if (isChatStarted) return; 
-
             const currentMode = toggleBtn.getAttribute('data-mode');
             if (currentMode === 'large') {
                 currentModel = MODELS.small;
@@ -447,7 +551,6 @@
         function handleInput(el) {
             el.style.height = 'auto';
             el.style.height = el.scrollHeight + 'px';
-            scrollToBottom(); 
         }
 
         function scrollToBottom() {
@@ -456,29 +559,14 @@
             });
         }
         
-        function focusInput() {
-            setTimeout(() => {
-                 scrollToBottom();
-                 chatContainer.scrollTop += 50; 
-            }, 300);
-        }
-
-        function focusBlur() {}
-
-        // --- COPY CODE LOGIC (Оптимизация: Modern Clipboard API + Fallback) ---
+        // --- COPY CODE LOGIC ---
         function copyCode(button) {
-            const codeBlock = button.parentElement.nextElementSibling.querySelector('code');
-            if (!codeBlock) return;
-
-            const textToCopy = codeBlock.innerText;
-
+            const container = button.closest('.code-header').nextElementSibling;
+            if (!container) return;
+            const textToCopy = container.innerText; 
             if (navigator.clipboard) {
-                navigator.clipboard.writeText(textToCopy).then(() => {
-                    showCopySuccess(button);
-                }).catch(() => {
-                    // Fallback, если Modern API не сработало (например, в iframe)
-                    fallbackCopy(textToCopy, button);
-                });
+                navigator.clipboard.writeText(textToCopy).then(() => showCopySuccess(button))
+                .catch(() => fallbackCopy(textToCopy, button));
             } else {
                 fallbackCopy(textToCopy, button);
             }
@@ -491,70 +579,63 @@
             textarea.style.left = '-9999px';
             document.body.appendChild(textarea);
             textarea.select();
-            
             try {
                 document.execCommand('copy');
                 showCopySuccess(button);
             } catch (err) {
-                console.error('Fallback: Could not copy text: ', err);
+                console.error('Fallback error', err);
             } finally {
                 document.body.removeChild(textarea);
             }
         }
 
         function showCopySuccess(button) {
-            const originalText = button.innerHTML;
+            const originalHtml = button.innerHTML;
             button.innerHTML = '<i class="fa-solid fa-check mr-1"></i> Скопировано!';
             button.classList.add('bg-green-700');
             button.classList.remove('hover:bg-green-600');
-
             setTimeout(() => {
-                button.innerHTML = originalText;
+                button.innerHTML = originalHtml;
                 button.classList.remove('bg-green-700');
                 button.classList.add('hover:bg-green-600');
             }, 2000);
         }
 
-        function addCopyButtons(element) {
+        function processCodeBlocks(element) {
+            element.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightElement(block);
+            });
             element.querySelectorAll('pre').forEach(pre => {
+                if (pre.parentNode.classList.contains('code-container')) return;
+                
                 const codeElement = pre.querySelector('code');
                 let lang = 'Code';
                 if (codeElement && codeElement.className) {
                     const match = codeElement.className.match(/language-(\w+)/);
-                    if (match) {
-                        lang = match[1].charAt(0).toUpperCase() + match[1].slice(1);
-                        if (lang.toLowerCase() === 'markdown') {
-                            lang = 'Markdown Content';
-                        }
-                    }
+                    if (match) lang = match[1].charAt(0).toUpperCase() + match[1].slice(1);
                 }
-
-                // Предотвращаем добавление кнопок дважды
-                if (pre.parentNode.classList.contains('code-container')) return;
 
                 const container = document.createElement('div');
                 container.className = 'code-container';
-
+                
                 const header = document.createElement('div');
                 header.className = 'code-header';
-
+                
                 const langLabel = document.createElement('span');
                 langLabel.textContent = lang;
-                header.appendChild(langLabel);
-
+                
                 const copyButton = document.createElement('button');
                 copyButton.className = 'px-2 py-1 rounded text-white bg-green-800 hover:bg-green-600 transition-colors focus:outline-none text-xs';
                 copyButton.innerHTML = '<i class="fa-solid fa-copy mr-1"></i> Копировать';
-                
                 copyButton.onclick = () => copyCode(copyButton);
                 
+                header.appendChild(langLabel);
                 header.appendChild(copyButton);
 
                 const parent = pre.parentNode;
                 if (parent) {
-                    // Оборачиваем pre в контейнер с шапкой
-                    container.appendChild(header);
                     parent.insertBefore(container, pre);
+                    container.appendChild(header);
                     container.appendChild(pre);
                 }
             });
@@ -563,34 +644,145 @@
         // --- EVENT LISTENERS ---
         chatForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            await sendMessage();
+            if (isGenerating) {
+                stopGeneration();
+            } else {
+                await sendMessage();
+            }
         });
 
         function handleEnter(e) {
             if (e.key === 'Enter' && !e.shiftKey) {
                 if (window.innerWidth > 768) {
                     e.preventDefault();
-                    sendMessage();
+                    if (!isGenerating) {
+                        sendMessage();
+                    }
                 }
             }
         }
-        
+
+        function setGeneratingState(generating) {
+            isGenerating = generating;
+            if (generating) {
+                sendBtn.classList.add('stop-btn', 'bg-red-500', 'hover:bg-red-600');
+                sendBtn.classList.remove('bg-green-600', 'hover:bg-green-500');
+                sendIcon.className = 'fa-solid fa-stop text-lg';
+                userInput.disabled = true;
+                const fileBtn = document.querySelector('button[onclick*="file-input"]');
+                if(fileBtn) {
+                    fileBtn.disabled = true;
+                    fileBtn.classList.add('opacity-50');
+                }
+            } else {
+                sendBtn.classList.remove('stop-btn', 'bg-red-500', 'hover:bg-red-600');
+                sendBtn.classList.add('bg-green-600', 'hover:bg-green-500');
+                sendIcon.className = 'fa-solid fa-paper-plane text-lg group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform';
+                userInput.disabled = false;
+                userInput.focus();
+                
+                const fileBtn = document.querySelector('button[onclick*="file-input"]');
+                if(fileBtn) {
+                    fileBtn.disabled = false;
+                    fileBtn.classList.remove('opacity-50');
+                }
+            }
+        }
+
+        function stopGeneration() {
+            if (abortController) {
+                abortController.abort();
+                abortController = null;
+            }
+        }
+
+        // --- STREAMING & TYPING LOGIC ---
+        class StreamTyper {
+            constructor(element) {
+                this.element = element;
+                this.buffer = "";
+                this.displayedText = "";
+                this.isStreamActive = true;
+                this.element.classList.add('typing-cursor');
+                this.startLoop();
+            }
+
+            push(chunk) {
+                this.buffer += chunk;
+            }
+
+            finish() {
+                this.isStreamActive = false;
+            }
+
+            async startLoop() {
+                while (this.isStreamActive || this.buffer.length > 0) {
+                    if (!document.body.contains(this.element)) {
+                         this.isStreamActive = false;
+                         break; 
+                    }
+
+                    if (this.buffer.length > 0) {
+                        const takeCount = this.buffer.length > 50 ? 5 : (Math.floor(Math.random() * 3) + 1);
+                        const chunk = this.buffer.slice(0, takeCount);
+                        this.buffer = this.buffer.slice(takeCount);
+                        
+                        this.displayedText += chunk;
+                        this.element.innerHTML = marked.parse(this.displayedText);
+                    }
+                    await new Promise(r => setTimeout(r, 10));
+                }
+                
+                this.element.classList.remove('typing-cursor');
+                processCodeBlocks(this.element.parentNode.parentNode);
+                scrollToBottom();
+            }
+        }
+
         // --- CORE FUNCTIONS ---
         async function sendMessage() {
-            const text = userInput.value.trim();
+            let text = userInput.value.trim();
+            
+            if (currentFileContent) {
+                const fileContext = `\n\n--- Attached File: ${currentFileName} ---\n${currentFileContent}\n--- End of File ---\n`;
+                if (!text) text = `Загружен файл: ${currentFileName}`;
+                text += fileContext;
+                clearFile();
+            }
+
             if (!text) return;
 
-            appendMessage('user', text);
+            let uiText = userInput.value.trim();
+            if (currentFileName && !uiText) uiText = `📂 Файл: ${currentFileName}`;
+            else if (currentFileName) uiText += `\n\n📂 [Прикреплен: ${currentFileName}]`;
+
+            appendMessage('user', uiText);
             userInput.value = '';
             userInput.style.height = 'auto'; 
             
-            const loadingId = appendLoading();
-            disableInput(true);
+            scrollToBottom();
+            setGeneratingState(true);
 
             chatHistory.push({ role: "user", content: text });
 
+            // *** 1. Создаем пузырь и вставляем анимацию мышления ***
+            const thinkingHtml = `
+                <div class="thinking-container">
+                    <div class="thinking-dot"></div>
+                    <div class="thinking-dot"></div>
+                    <div class="thinking-dot"></div>
+                </div>
+            `;
+            // Передаем пустую строку в appendMessage, чтобы получить элемент, 
+            // а затем вручную вставляем HTML анимации (чтобы Markdown не испортил его)
+            const botMessageProse = appendMessage('assistant', '');
+            botMessageProse.innerHTML = thinkingHtml;
+            scrollToBottom();
+
+            abortController = new AbortController();
+
             try {
-                const response = await fetchWithRetry(API_URL, {
+                const response = await fetch(API_URL, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -600,24 +792,63 @@
                         model: currentModel,
                         messages: chatHistory,
                         temperature: 0.7,
-                        max_tokens: 12000
-                    })
+                        max_tokens: 12000,
+                        stream: true
+                    }),
+                    signal: abortController.signal
                 });
 
                 if (!response.ok) {
                     throw new Error(`Status: ${response.status}`);
                 }
-
-                const data = await response.json();
-                const aiResponse = data.choices[0].message.content;
-
-                chatHistory.push({ role: "assistant", content: aiResponse });
-                removeLoading(loadingId);
-                const newMessage = appendMessage('assistant', aiResponse);
                 
-                if (newMessage) {
-                    addCopyButtons(newMessage);
+                // *** 2. Подготовка к стримингу ***
+                // Очищаем анимацию перед началом печати текста
+                botMessageProse.innerHTML = ''; 
+                
+                const typer = new StreamTyper(botMessageProse);
+                
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder("utf-8");
+                let fullResponseText = "";
+
+                try {
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+
+                        const chunk = decoder.decode(value, { stream: true });
+                        const lines = chunk.split('\n');
+
+                        for (const line of lines) {
+                            if (line.startsWith('data: ')) {
+                                const jsonStr = line.slice(6).trim();
+                                if (jsonStr === '[DONE]') continue;
+                                
+                                try {
+                                    const json = JSON.parse(jsonStr);
+                                    const content = json.choices[0]?.delta?.content || "";
+                                    if (content) {
+                                        typer.push(content);
+                                        fullResponseText += content;
+                                    }
+                                } catch (e) {
+                                    // ignore
+                                }
+                            }
+                        }
+                    }
+                } catch (readError) {
+                    if (readError.name === 'AbortError') {
+                        typer.push('\n\n*[Генерация прервана пользователем]*');
+                        fullResponseText += '\n\n*[Генерация прервана пользователем]*';
+                    } else {
+                        throw readError;
+                    }
                 }
+                
+                typer.finish();
+                chatHistory.push({ role: "assistant", content: fullResponseText });
                 
                 if (!isChatStarted) {
                     isChatStarted = true;
@@ -625,36 +856,13 @@
                 }
 
             } catch (error) {
-                removeLoading(loadingId);
-                console.error("API Error Log:", error);
-                appendMessage('assistant', `Извините, произошла ошибка API: ${error.message}. Попробуйте еще раз.`);
-            } finally {
-                disableInput(false);
-                scrollToBottom();
-            }
-        }
-
-        async function fetchWithRetry(url, options, maxRetries = 3) {
-            for (let i = 0; i < maxRetries; i++) {
-                try {
-                    const response = await fetch(url, options);
-                    if (response.status !== 429 && response.ok) {
-                        return response;
-                    } else if (response.status === 429 && i < maxRetries - 1) {
-                        const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
-                        await new Promise(resolve => setTimeout(resolve, delay));
-                        continue; 
-                    } else {
-                        return response; 
-                    }
-                } catch (error) {
-                    if (i < maxRetries - 1) {
-                        const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
-                        await new Promise(resolve => setTimeout(resolve, delay));
-                        continue;
-                    }
-                    throw error;
+                if (error.name !== 'AbortError') {
+                    // В случае ошибки заменяем анимацию на текст ошибки
+                    botMessageProse.innerHTML = marked.parse(`Извините, произошла ошибка: ${error.message}`);
                 }
+            } finally {
+                setGeneratingState(false);
+                abortController = null;
             }
         }
 
@@ -683,7 +891,7 @@
             if (isUser) {
                 contentWrapper.innerHTML = escapeHtml(content).replace(/\n/g, '<br>');
             } else {
-                contentWrapper.innerHTML = marked.parse(content);
+                contentWrapper.innerHTML = content ? marked.parse(content) : '';
             }
 
             const messageHtml = `
@@ -699,41 +907,7 @@
 
             div.innerHTML = messageHtml;
             chatContainer.appendChild(div);
-            scrollToBottom();
-            
             return div.querySelector('.prose'); 
-        }
-
-        function appendLoading() {
-            const id = 'loading-' + Date.now();
-            const div = document.createElement('div');
-            div.id = id;
-            div.className = 'flex w-full justify-start animate-fade-in';
-            div.innerHTML = `
-                <div class="flex items-start">
-                    <div class="flex-shrink-0 h-8 w-8 rounded-full bg-transparent text-green-400 mr-3 border border-green-500/30 flex items-center justify-center">
-                        <i class="fa-solid fa-dragon text-xs"></i>
-                    </div>
-                    <div class="message-ai py-2 flex items-center gap-1">
-                        <div class="w-2 h-2 bg-green-500 rounded-full typing-dot"></div>
-                        <div class="w-2 h-2 bg-green-500 rounded-full typing-dot"></div>
-                        <div class="w-2 h-2 bg-green-500 rounded-full typing-dot"></div>
-                    </div>
-                </div>
-            `;
-            chatContainer.appendChild(div);
-            scrollToBottom();
-            return id;
-        }
-
-        function removeLoading(id) {
-            const el = document.getElementById(id);
-            if (el) el.remove();
-        }
-
-        function disableInput(disabled) {
-            userInput.disabled = disabled;
-            sendBtn.disabled = disabled;
         }
 
         function escapeHtml(unsafe) {
@@ -749,6 +923,5 @@
     </script>
 </body>
 </html>
-
 
 
