@@ -20,6 +20,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 
+    <!-- KaTeX (LaTeX Math Rendering) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -96,17 +101,20 @@
         ::-webkit-scrollbar-thumb { background: #15803d; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #22c55e; }
 
+        /* KaTeX Font Fixes */
+        .katex { font-size: 1.1em; }
+        .katex-display { margin: 1em 0; overflow-x: auto; overflow-y: hidden; }
+
         /* Markdown Styles */
         .prose pre {
             background-color: #0f1210;
             border: 1px solid #166534;
             margin-top: 0.5em;
             margin-bottom: 0.5em;
-            /* Стандартный отступ для внешнего блока */
             padding: 1rem !important; 
             border-radius: 0.5rem;
             overflow-x: auto;
-            position: relative; /* Context for positioning if needed */
+            position: relative; 
         }
         
         /* Highlight.js overrides */
@@ -115,7 +123,6 @@
             padding: 0 !important;
         }
 
-        /* NUCLEAR OPTION for removing bold/italics inside code blocks */
         .prose pre code, 
         .prose pre code span, 
         .hljs-strong, 
@@ -136,14 +143,12 @@
             transition: background-color 0.1s ease; 
         }
         
-        /* Code inside PRE blocks */
         .prose pre code {
             color: inherit;
             background-color: transparent;
             padding: 0 0 1.5rem 0 !important; 
             display: block;
             min-width: 100%;
-            /* Ensure line height is consistent */
             line-height: 1.5; 
         }
         
@@ -177,7 +182,6 @@
             font-size: 0.75rem;
             font-family: 'JetBrains Mono', monospace;
         }
-        /* Remove border/radius from pre when inside container to look seamless */
         .code-container pre {
             margin: 0;
             border: none;
@@ -290,6 +294,14 @@
         
         .stop-btn { background-color: #ef4444; }
         .stop-btn:hover { background-color: #dc2626; }
+
+        /* Auto-expanding textarea styling */
+        #user-input {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        #user-input::-webkit-scrollbar { width: 4px; }
+        #user-input::-webkit-scrollbar-thumb { background: #15803d; }
     </style>
 </head>
 <body class="antialiased selection:bg-green-500/30 selection:text-green-50">
@@ -356,7 +368,7 @@
 
     <!-- Chat Container -->
     <main id="chat-container" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 scroll-smooth pb-28">
-        <div class="flex flex-col items-center justify-center mt-10 opacity-70 mb-10 text-center space-y-4 animate-fade-in">
+        <div class="flex flex-col items-center justify-center mt-10 opacity-70 mb-10 text-center space-y-4 animate-fade-in" id="welcome-screen">
             <div class="w-20 h-20 rounded-full bg-green-900/20 border border-green-500/20 flex items-center justify-center shadow-[0_0_30px_rgba(34,197,94,0.1)]">
                 <i class="fa-solid fa-robot text-3xl text-green-500"></i>
             </div>
@@ -373,7 +385,7 @@
                         id="user-input" 
                         rows="1"
                         placeholder="Напишите сообщение..." 
-                        class="w-full bg-transparent text-gray-100 placeholder-gray-500 text-base rounded-xl px-4 py-3 focus:outline-none border border-transparent focus:border-green-500/30 transition-all resize-none max-h-40 font-sans"
+                        class="w-full bg-transparent text-gray-100 placeholder-gray-500 text-base rounded-xl px-4 py-3 focus:outline-none border border-transparent focus:border-green-500/30 transition-all resize-none font-sans"
                         oninput="handleInput(this)"
                         onkeydown="handleEnter(event)"
                     ></textarea>
@@ -425,6 +437,7 @@
         // --- CONFIGURATION ---
         const API_KEY = 'Tjx8hlgYwDWL2tr9YpACDX2kSEFXmSFq';
         const API_URL = 'https://api.mistral.ai/v1/chat/completions';
+        const STORAGE_KEY = 'poison_eve_history';
         
         const MODELS = {
             small: 'mistral-small-latest',
@@ -439,16 +452,12 @@
         let currentFileName = null;
 
         let chatHistory = [
-            { role: "system", content: `Ты — Poison Eve, экспертный ИИ-помощник с аналитическим складом ума и эмпатичным подходом. Твоя цель — предоставлять глубокие, точные и структурированные ответы, которые решают истинную задачу пользователя.
+            { role: "system", content: `Ты — Poison Eve, экспертный ИИ-помощник с аналитическим складом ума и эмпатичным подходом. Твоя цель — предоставлять глубокие, точные и структурированные ответы.
 Core Principles:
-Интеллектуальная честность: Если ты чего-то не знаешь, признай это. Исправляй заблуждения пользователя вежливо, как мудрый коллега.
-Структура превыше хаоса: Используй заголовки (##), списки и таблицы для организации информации. Избегай «стен текста».
-Адаптивность: Подстраивай тон и сложность языка под уровень вопроса. Для простых вопросов будь краток, для сложных — проводи глубокий анализ.
-Chain of Thought: Перед тем как дать окончательный ответ, кратко проанализируй вопрос, чтобы выявить скрытые потребности пользователя.
-Formatting Rules:
-Используй жирный шрифт для акцентов.
-Для математических или научных формул используй LaTeX (например, E=mc^2).
-Если ответ предполагает сравнение, всегда используй таблицу.` }
+Интеллектуальная честность: Если ты чего-то не знаешь, признай это.
+Структура: Используй заголовки (##), списки и таблицы.
+LaTeX: Для математических формул используй формат $E=mc^2$ (inline) или $$E=mc^2$$ (block).
+` }
         ];
 
         // --- DOM ELEMENTS ---
@@ -459,6 +468,7 @@ Formatting Rules:
         const sendIcon = document.getElementById('send-icon');
         const confirmModal = document.getElementById('confirm-modal');
         const fileInput = document.getElementById('file-input');
+        const welcomeScreen = document.getElementById('welcome-screen');
         
         const filePreviewBar = document.getElementById('file-preview-bar');
         const fileNamePreview = document.getElementById('file-name-preview');
@@ -467,6 +477,44 @@ Formatting Rules:
         const toggleBtn = document.getElementById('model-toggle');
         const toggleIcon = document.getElementById('model-icon');
         const toggleText = document.getElementById('model-text');
+
+        // --- LOCAL STORAGE LOGIC ---
+        function saveChatToStorage() {
+            try {
+                // We save the full history including system prompt to simplify restoration
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(chatHistory));
+            } catch (e) {
+                console.error("Failed to save chat history", e);
+            }
+        }
+
+        function loadChatFromStorage() {
+            try {
+                const stored = localStorage.getItem(STORAGE_KEY);
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        chatHistory = parsed;
+                        // Check if we have more than just the system prompt
+                        if (chatHistory.length > 1) {
+                            if (welcomeScreen) welcomeScreen.style.display = 'none';
+                            isChatStarted = true;
+                            
+                            // Re-render all messages skipping the system prompt
+                            chatHistory.slice(1).forEach(msg => {
+                                appendMessage(msg.role, msg.content, false); // false = no animation for old messages
+                            });
+                            
+                            scrollToBottom();
+                            updateModelToggleState();
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to load chat history", e);
+                // On error, fallback to default init
+            }
+        }
 
         // --- FILE HANDLING LOGIC ---
         function handleFileSelect(input) {
@@ -513,12 +561,20 @@ Formatting Rules:
         }
         
         function clearChatHistory() {
+            // Clear UI
+            // Remove everything except welcome screen if it exists (but we recreate it usually)
             chatContainer.innerHTML = '';
-            chatHistory = [chatHistory[0]];
+            
+            // Reset History
+            chatHistory = [chatHistory[0]]; // Keep system prompt
+            localStorage.removeItem(STORAGE_KEY);
+            
             isChatStarted = false;
             updateModelToggleState(); 
+            
+            // Restore Welcome Screen
             chatContainer.innerHTML = `
-                <div class="flex flex-col items-center justify-center mt-10 opacity-70 mb-10 text-center space-y-4 animate-fade-in">
+                <div class="flex flex-col items-center justify-center mt-10 opacity-70 mb-10 text-center space-y-4 animate-fade-in" id="welcome-screen">
                     <div class="w-20 h-20 rounded-full bg-green-900/20 border border-green-500/20 flex items-center justify-center shadow-[0_0_30px_rgba(34,197,94,0.1)]">
                         <i class="fa-solid fa-robot text-3xl text-green-500"></i>
                     </div>
@@ -610,10 +666,60 @@ Formatting Rules:
             }, 2000);
         }
 
+        // --- RENDERERS ---
+
+        /* Safe Markdown Rendering Pipeline:
+           1. Replace LaTeX segments with placeholders so Marked doesn't mess up underscores/asterisks.
+           2. Render Markdown.
+           3. Restore LaTeX segments.
+           4. Render LaTeX using KaTeX.
+        */
+        function safeRenderMarkdown(text) {
+            const mathSegments = [];
+            
+            // 1. Hide Block Math $$...$$
+            let protectedText = text.replace(/\$\$([\s\S]+?)\$\$/g, (match) => {
+                mathSegments.push(match);
+                return `%%%MATH_BLOCK_${mathSegments.length - 1}%%%`;
+            });
+            
+            // 2. Hide Inline Math $...$ (avoid matching across newlines to be safe)
+            protectedText = protectedText.replace(/\$([^$\n]+?)\$/g, (match) => {
+                mathSegments.push(match);
+                return `%%%MATH_INLINE_${mathSegments.length - 1}%%%`;
+            });
+
+            // 3. Render Markdown
+            let html = marked.parse(protectedText);
+
+            // 4. Restore Math
+            mathSegments.forEach((segment, i) => {
+                // We use replace once per placeholder
+                html = html.replace(`%%%MATH_BLOCK_${i}%%%`, segment);
+                html = html.replace(`%%%MATH_INLINE_${i}%%%`, segment);
+            });
+
+            return html;
+        }
+
         function processCodeBlocks(element) {
+            // Highlight.js
             element.querySelectorAll('pre code').forEach((block) => {
                 hljs.highlightElement(block);
             });
+
+            // KaTeX Auto-Render
+            if (window.renderMathInElement) {
+                renderMathInElement(element, {
+                    delimiters: [
+                        {left: '$$', right: '$$', display: true},
+                        {left: '$', right: '$', display: false}
+                    ],
+                    throwOnError: false
+                });
+            }
+
+            // Copy Buttons
             element.querySelectorAll('pre').forEach(pre => {
                 if (pre.parentNode.classList.contains('code-container')) return;
                 
@@ -737,12 +843,15 @@ Formatting Rules:
                         this.buffer = this.buffer.slice(takeCount);
                         
                         this.displayedText += chunk;
-                        this.element.innerHTML = marked.parse(this.displayedText);
+                        // Use safeRenderMarkdown to handle Math + Markdown
+                        this.element.innerHTML = safeRenderMarkdown(this.displayedText);
                     }
                     await new Promise(r => setTimeout(r, 10));
                 }
                 
                 this.element.classList.remove('typing-cursor');
+                // Final render to be sure and trigger KaTeX/Highlight
+                this.element.innerHTML = safeRenderMarkdown(this.displayedText);
                 processCodeBlocks(this.element.parentNode.parentNode);
                 scrollToBottom();
             }
@@ -765,16 +874,22 @@ Formatting Rules:
             if (currentFileName && !uiText) uiText = `📂 Файл: ${currentFileName}`;
             else if (currentFileName) uiText += `\n\n📂 [Прикреплен: ${currentFileName}]`;
 
+            // Remove welcome screen if present
+            const ws = document.getElementById('welcome-screen');
+            if (ws) ws.style.display = 'none';
+
             appendMessage('user', uiText);
             userInput.value = '';
-            userInput.style.height = 'auto'; 
+            userInput.style.height = 'auto'; // Reset height
             
             scrollToBottom();
             setGeneratingState(true);
 
-            chatHistory.push({ role: "user", content: text });
+            const userMsgObj = { role: "user", content: text };
+            chatHistory.push(userMsgObj);
+            saveChatToStorage(); // SAVE USER MSG
 
-            // *** 1. Создаем пузырь и вставляем анимацию мышления ***
+            // *** 1. Animation ***
             const thinkingHtml = `
                 <div class="thinking-container">
                     <div class="thinking-dot"></div>
@@ -782,9 +897,7 @@ Formatting Rules:
                     <div class="thinking-dot"></div>
                 </div>
             `;
-            // Передаем пустую строку в appendMessage, чтобы получить элемент, 
-            // а затем вручную вставляем HTML анимации (чтобы Markdown не испортил его)
-            const botMessageProse = appendMessage('assistant', '');
+            const botMessageProse = appendMessage('assistant', '', true); // True = skip rendering initially
             botMessageProse.innerHTML = thinkingHtml;
             scrollToBottom();
 
@@ -800,7 +913,7 @@ Formatting Rules:
                     body: JSON.stringify({
                         model: currentModel,
                         messages: chatHistory,
-                        temperature: 0.7,
+                        temperature: 0.5,
                         max_tokens: 12000,
                         stream: true
                     }),
@@ -811,8 +924,6 @@ Formatting Rules:
                     throw new Error(`Status: ${response.status}`);
                 }
                 
-                // *** 2. Подготовка к стримингу ***
-                // Очищаем анимацию перед началом печати текста
                 botMessageProse.innerHTML = ''; 
                 
                 const typer = new StreamTyper(botMessageProse);
@@ -857,7 +968,10 @@ Formatting Rules:
                 }
                 
                 typer.finish();
-                chatHistory.push({ role: "assistant", content: fullResponseText });
+                
+                const botMsgObj = { role: "assistant", content: fullResponseText };
+                chatHistory.push(botMsgObj);
+                saveChatToStorage(); // SAVE ASSISTANT MSG
                 
                 if (!isChatStarted) {
                     isChatStarted = true;
@@ -866,8 +980,7 @@ Formatting Rules:
 
             } catch (error) {
                 if (error.name !== 'AbortError') {
-                    // В случае ошибки заменяем анимацию на текст ошибки
-                    botMessageProse.innerHTML = marked.parse(`Извините, произошла ошибка: ${error.message}`);
+                    botMessageProse.innerHTML = safeRenderMarkdown(`Извините, произошла ошибка: ${error.message}`);
                 }
             } finally {
                 setGeneratingState(false);
@@ -875,7 +988,8 @@ Formatting Rules:
             }
         }
 
-        function appendMessage(role, content) {
+        // Modified appendMessage to support safe rendering
+        function appendMessage(role, content, skipRender = false) {
             const div = document.createElement('div');
             const isUser = role === 'user';
             
@@ -897,10 +1011,12 @@ Formatting Rules:
 
             const contentWrapper = document.createElement('div');
             
-            if (isUser) {
+            if (skipRender) {
+                contentWrapper.innerHTML = '';
+            } else if (isUser) {
                 contentWrapper.innerHTML = escapeHtml(content).replace(/\n/g, '<br>');
             } else {
-                contentWrapper.innerHTML = content ? marked.parse(content) : '';
+                contentWrapper.innerHTML = content ? safeRenderMarkdown(content) : '';
             }
 
             const messageHtml = `
@@ -916,6 +1032,12 @@ Formatting Rules:
 
             div.innerHTML = messageHtml;
             chatContainer.appendChild(div);
+            
+            // Only process block if we actually rendered something
+            if (!skipRender && !isUser) {
+                processCodeBlocks(div);
+            }
+            
             return div.querySelector('.prose'); 
         }
 
@@ -928,9 +1050,12 @@ Formatting Rules:
                 .replace(/'/g, "&#039;");
         }
         
-        document.addEventListener('DOMContentLoaded', updateModelToggleState);
+        // --- INIT ---
+        document.addEventListener('DOMContentLoaded', () => {
+            loadChatFromStorage();
+            updateModelToggleState();
+        });
     </script>
 </body>
 </html>
-
 
